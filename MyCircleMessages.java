@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+
 public class MyCircleMessages {
 
     public String text;
@@ -6,12 +8,28 @@ public class MyCircleMessages {
     public ArrayList<String> receivers;
 
 
-    public MyCircleMessages(String sender, String timestamp, String text, ArrayList<String> receivers) {
-        text = text;
-        timestamp = timestamp;
-        sender = sender;
+    public MyCircleMessages(String send, String time, String body, ArrayList<String> people) {
+        text = body;
+        timestamp = time;
+        sender = send;
         receivers = new ArrayList<String>();
-        receivers = receivers;
+        receivers = people;
+    }
+
+    public String getText() {
+	return text;
+    }
+
+    public String getTimestamp() {
+	return timestamp;
+    }
+
+    public String getSender() {
+	return sender;
+    }
+
+    public ArrayList<String> getReceivers() {
+	return receivers;
     }
 
 }
