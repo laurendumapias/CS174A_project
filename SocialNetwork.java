@@ -94,6 +94,7 @@ public class SocialNetwork {
 	    }
             //con.close();
 	} catch(Exception e) {
+                System.out.println("FHJDHFJDFJFDHKFDHJF");
 	    	System.out.println(e);
 	}   
 
@@ -257,7 +258,7 @@ public class SocialNetwork {
 	 }
 
 	 if(input == 2) {
-	     viewChatGroups();
+             viewChatGroups(u);
 	 }
 	
 	 if(input == 3) {
@@ -323,7 +324,7 @@ public class SocialNetwork {
 
     
 
-    public void viewChatGroups() {
+    public void viewChatGroups(User u) {
 	System.out.println("********************************************************");
 	System.out.println("Welcome to your ChatGroups! What would you like to do?");
 	System.out.println("********************************************************");
@@ -426,6 +427,43 @@ public class SocialNetwork {
                   } while (input != 1 && input != 2 && input != 3);
 
                   if(input == 1) {
+                      scanner.nextLine();
+                      System.out.println("Enter the text for the message:");
+                      String messageText = scanner.nextLine();
+
+
+                      int id = 0;
+                      try {
+                          String sql1 = "SELECT MAX(id) FROM chat_group_messages";
+                          PreparedStatement st = con.prepareStatement(sql1);
+
+                          ResultSet rs = st.executeQuery();
+                          while(rs.next()) {
+                              id = Integer.parseInt(rs.getString(1));
+                              id = id + 1;
+                              System.out.println("MAX id: " + rs.getString(1));
+                          }
+                      } catch(Exception e) {
+                              System.out.println(e);
+                      }
+
+                      try {
+                          String sql2 = "INSERT INTO chat_group_messages (id, timestamp, chat_group_name, sender, text) VALUES (?, CURRENT_TIMESTAMP, ?,?,?)";
+                          PreparedStatement st2 = con.prepareStatement(sql2);
+                          st2.setString(1, String.valueOf(id));
+                          st2.setString(2, in);
+                          st2.setString(3, u.getEmail());
+                          st2.setString(3, messageText);
+
+                          ResultSet rs2 = st2.executeQuery();
+                      } catch(Exception e) {
+                              System.out.println(e);
+                      }
+
+                      System.out.println("---------------------------------");
+                      System.out.println("Message successfully posted!");
+                      System.out.println("---------------------------------");
+
 
                   }
 
