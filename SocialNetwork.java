@@ -1,10 +1,27 @@
 import java.util.Scanner;
 import java.util.ArrayList;
+import java.sql.*;
 
 public class SocialNetwork {
 
     public Scanner scanner = new Scanner(System.in);
-    
+    public User user;
+    public Connection con;
+
+
+    public SocialNetwork() {
+	try {
+	    Class.forName("oracle.jdbc.driver.OracleDriver");
+	    String url = "jdbc:oracle:thin:@uml.cs.ucsb.edu:1521:xe";
+	    String username = "brandonwicka";
+	    String password = "171";
+	    con = DriverManager.getConnection(url, username, password);
+	  
+	}
+	catch(Exception e) {
+	    System.out.println(e);
+	}
+    }
     
     public static void main(String[] args) {
 	SocialNetwork sn = new SocialNetwork();
@@ -37,26 +54,61 @@ public class SocialNetwork {
 	}
 	
 	if(input == 3) {
+
+	    try {
+		con.close();
+	    }
+	    catch (Exception e) {
+		System.out.println(e);
+	    }
 	    System.out.println("Goodbye!");
 	    return;
 	}
     }
 
     public void login() {
+	boolean isValid = false;
 	scanner = new Scanner(System.in);
 	System.out.println("Enter your email: ");
 	String email = scanner.next();
-	System.out.println("Enter your password: ");
+        System.out.println("Enter your password: ");
 	String password = scanner.next();
 
+
 	//do database stuff to check if valid email and pass combination.
-	boolean isValid = true;
+	try {
+	    String sql = "SELECT email, password FROM Users where email = ? and password = ?";
+	    PreparedStatement st = con.prepareStatement(sql);
+	    st.setString(1, email);
+	    st.setString(2, password);
+	    ResultSet rs = st.executeQuery();
+	    while(rs.next()) {		
+		System.out.println(rs.getString(1) + " " + rs.getString(2));
+	        String s = rs.getString(1);
+		if(s.equals("")) {
+		    isValid = false;
+		}
+		else {
+		    isValid = true;
+		}
+	    }
+            //con.close();
+	} catch(Exception e) {
+	    	System.out.println(e);
+	}   
 
 	if(isValid) {
 	    System.out.println("-----------------------------------------------------");
 	    System.out.println("Successfully logged in!");
 	    System.out.println("-----------------------------------------------------");
-	    displayHomePage("Brandon");
+
+
+
+
+
+            user = new User(email, password);
+            populateFriendList(user);
+	    displayHomePage(user);
 	    
 	}
 
@@ -69,17 +121,103 @@ public class SocialNetwork {
 	}       	
     }
 
+    public void populateFriendList(User u) {
+        try {
+            String sql = "SELECT user1 FROM Friendships WHERE user2 = ?";
+            PreparedStatement st = con.prepareStatement(sql);
+            st.setString(1, u.getEmail());
+            ResultSet rs = st.executeQuery();
+            while(rs.next()) {
+                String friend = rs.getString(1);
+                System.out.println("FRIEND: " + friend);
+                u.addFriends(friend);
+            }
+            //con.close();
+        } catch(Exception e) {
+                System.out.println(e);
+        }
+
+        try {
+            String sql = "SELECT user2 FROM Friendships WHERE user1 = ?";
+            PreparedStatement st = con.prepareStatement(sql);
+            st.setString(1, u.getEmail());
+            ResultSet rs = st.executeQuery();
+            while(rs.next()) {
+                String friend = rs.getString(1);
+                System.out.println("FRIEND: " + friend);
+                u.addFriends(friend);
+            }
+            //con.close();
+        } catch(Exception e) {
+                System.out.println(e);
+        }
+
+        u.addFriends(u.getEmail());
+
+        return;
+
+
+    }
+
     public void createAccount() {
+	boolean isValid = true;
+        int manager = 0;
 	System.out.println("Enter the email you wish to use as your login: ");
 	String email = scanner.next();
 	System.out.println("Enter a password: ");
 	String password = scanner.next();
+        System.out.println("Enter your name: ");
+        String name = scanner.next();
+        System.out.println("Enter your phone number: ");
+        String phone = scanner.next();
+        System.out.println("Enter your screenname: ");
+        String screenname = scanner.next();
+        System.out.println("Are you a manager? Enter 1 for yes, 0 for no");
+        String isAManager = scanner.next();
+        int isAMan = Integer.parseInt(isAManager);
+
 
 	// check if email entered is not already in database
+	try {
+	    String sql = "SELECT email FROM Users where email = ?";
+	    PreparedStatement st = con.prepareStatement(sql);
+	    st.setString(1, email);
+	    ResultSet r = st.executeQuery();
+	    while(r.next()) {		
+		System.out.println(r.getString(1));
+	        String s = r.getString(1);
+		if(s != null) {
+		    isValid = false;
+		}
+		else {
+		    isValid = true;
+		}
+	    }
+	    //con.close();
+	} catch(Exception e) {
+	    System.out.println("try failed :(");
+	    System.out.println(e);
+	}   
 
-	boolean isValid = true;
-
+	
 	if(isValid) {
+	    
+	    try {
+	    String sql = "INSERT INTO Users(email,name,phone,password,screenname,isAManager) VALUES (?,?,?,?,?,?)";
+	    PreparedStatement st = con.prepareStatement(sql);
+	    st.setString(1, email);
+            st.setString(2, name);
+            st.setString(3, phone);
+            st.setString(4, password);
+            st.setString(5, screenname);
+            st.setInt(6, isAMan);
+            ResultSet r = st.executeQuery();
+	    //con.close();
+	    } catch(Exception e) {
+		System.out.println(e);
+            }
+
+
 	    System.out.println("------------------------------------------------------------");
 	    System.out.println("Success! Your account has been created and is ready to use!");
 	    System.out.println("------------------------------------------------------------");
@@ -90,14 +228,14 @@ public class SocialNetwork {
 	    System.out.println("----------------------------------------------------------");
 	    System.out.println("Error! Email already in use. Please choose another email.");
 	    System.out.println("----------------------------------------------------------");
-	    createAccount();
+	    start();
 	}
 	
     }
 
-    public void displayHomePage(String user) {
+    public void displayHomePage(User u) {
 	 System.out.println("******************************************************");
-	 System.out.println("Hello " + user + "! What would you like to do today?");
+	 System.out.println("Hello " + u.getName() + "! What would you like to do today?");
 	 System.out.println("******************************************************");
 	 System.out.println("1.) View myCircle");
 	 System.out.println("2.) View my ChatGroups");
@@ -115,7 +253,7 @@ public class SocialNetwork {
 	 } while (input != 1 && input != 2 && input != 3 && input != 4 && input != 5 && input != 6);
 
 	 if(input == 1) {
-	     viewMyCircle();
+	     viewMyCircle(u);
 	 }
 
 	 if(input == 2) {
@@ -142,147 +280,48 @@ public class SocialNetwork {
 	 }		           	 
      }
  
-    public void viewMyCircle() {
+    public void viewMyCircle(User u) {
 	System.out.println("*****************************************************");
 	System.out.println("Welcome to your myCircle! What would you like to do?");
 	System.out.println("*****************************************************");
-	System.out.println("1.) View recent messages");
+	System.out.println("1.) View myCircle posts");
 	System.out.println("2.) Post a new message");
-	System.out.println("3.) Delete a message");
-	System.out.println("4.) Back to main menu");
+        System.out.println("3.) Search posts by topic words");
+        System.out.println("4.) Back to main menu");
 
 	int input;
 
 	do {
 	     input = scanner.nextInt();
-	     if(input != 1 && input != 2 && input != 3 && input != 4)
+             if(input != 1 && input != 2 && input != 3 && input != 4)
 	       	System.out.println("Invalid selection");
-	 } while (input != 1 && input != 2 && input != 3 && input != 4);
+         } while (input != 1 && input != 2 && input != 3 && input != 4);
 
 	 if(input == 1) {
-	     viewRecentMessages();
+             u.getMyCircle().populateMessages(u, con);
+             viewMyCircle(u);
 	 }
 
 	 if(input == 2) {
-	     postMyCircleMessage();
+             u.getMyCircle().postMyCircleMessage(u, con);
+	     viewMyCircle(u);
+	 }
+
+         if(input == 3) {
+             ArrayList<String> topics = new ArrayList<String>();
+             u.getMyCircle().searchMessages(u, con, topics);
+             viewMyCircle(u);
+         }
+
+         if(input == 4) {
+	     displayHomePage(u);
 	 }
 	
-	 if(input == 3) {
-	     deleteMyCircleMessage();
-	 }
-
-	 if(input == 4) {
-	     displayHomePage("Brandon");
-	 }
-	
 
     }
 
-    public void viewRecentMessages() {
-	ArrayList<String> receivers = new ArrayList<String>();
-	receivers.add("Joe");
-	ArrayList<MyCircleMessages> m = new ArrayList<MyCircleMessages>();
-	m.add(new MyCircleMessages("Brandon", "12 Oct 2016", "Hey dude whats up", receivers));
-	m.add(new MyCircleMessages("Brandon", "13 Oct 2016", "I hate u", receivers));
-	m.add(new MyCircleMessages("Brandon", "1 Dec 2016", "where am i?", receivers));
-	m.add(new MyCircleMessages("Brandon", "22 June 2016", "Vote for me for president", receivers));
 
-	for(int i = 0; i < 4; i++) {
-	    System.out.println("------------------------------------------------------------------");
-	    System.out.println("Sender: " + m.get(i).getSender());
-	    System.out.println("Posted on: " + m.get(i).getTimestamp());
-	    System.out.println("");
-	    System.out.println("" + m.get(i).getText());
-	    System.out.println("");	 	   
-	}
-	System.out.println("------------------------------------------------------------------");
-	System.out.println("")
-    }
-
-    public void postMyCircleMessage() {
-	System.out.println("Enter the text for the message: ");
-	String messageText = scanner.next();
-	ArrayList<String> words = new ArrayList<>();
-	addMessageTopicWords(words);
-	System.out.println("Who would you like to receive this message?");
-	System.out.println("1.) Everyone");
-	System.out.println("2.) Only certain people");
-
-	int input;
-
-	do {
-	     input = scanner.nextInt();
-	     if(input != 1 && input != 2)
-	       	System.out.println("Invalid selection");
-	 } while (input != 1 && input != 2);
-
-	 if(input == 1) {
-	     System.out.println("---------------------------------");
-	     System.out.println("Message successfully posted!");
-	     System.out.println("---------------------------------");
-	     viewMyCircle();
-	 }
-
-	 if(input == 2) {
-	     ArrayList<String> names = new ArrayList<>();
-	     addMessageReceivers(names);
-	     
-	 }
-	
-    }
-
-    public void addMessageReceivers(ArrayList<String> names) {
-	System.out.println("Enter the name of who you want to see the message:");
-	String s = scanner.next();
-	names.add(s);
-        System.out.println("Do you want to send this message to another person?"); 
-	System.out.println("1.) Yes");
-	System.out.println("2.) No");
-	int in;
-	do {
-	     in = scanner.nextInt();
-	     if(in != 1 && in != 2)
-      	     System.out.println("Invalid selection");
-	 } while (in != 1 && in != 2);
-
-	if(in == 1) {
-	    addMessageReceivers(names);
-	}
-
-	if(in == 2) {
-	    System.out.println("--------------------------------");
-	    System.out.println("Message successfully sent!");
-	    System.out.println("--------------------------------");
-	    displayHomePage("Brandon");
-	}
-    }
-
-     public void addMessageTopicWords(ArrayList<String> words) {
-	System.out.println("Enter a topic word to be associated with your message:");
-	String s = scanner.next();
-	words.add(s);
-        System.out.println("Do you want to add another topic word?"); 
-	System.out.println("1.) Yes");
-	System.out.println("2.) No");
-	int in;
-	do {
-	     in = scanner.nextInt();
-	     if(in != 1 && in != 2)
-      	     System.out.println("Invalid selection");
-	 } while (in != 1 && in != 2);
-
-	if(in == 1) {
-	    addMessageTopicWords(words);
-	}
-
-	if(in == 2) {
-	    return;
-	}
-    }
-
-    public void deleteMyCircleMessage() {
-
-    }
+    
 
     public void viewChatGroups() {
 	System.out.println("********************************************************");
@@ -295,6 +334,8 @@ public class SocialNetwork {
 	System.out.println("5.) Back to main menu");
 
 	int input;
+        int numOfGroups = 0;
+        ArrayList<String> chatGroupList = new ArrayList<String>();
 	do {
 	     input = scanner.nextInt();
 	     if(input != 1 && input != 2 && input != 3 && input != 4 && input != 5)
@@ -302,7 +343,108 @@ public class SocialNetwork {
 	 } while (input != 1 && input != 2 && input != 3 && input != 4 && input != 5);
 
 	 if(input == 1) {
-	     
+             System.out.println("******************************************");
+             System.out.println("Here are the ChatGroups you belong to: ");
+             System.out.println("******************************************");
+             try {
+                 String sql2 = "SELECT cg.name FROM Chat_Groups cg INNER JOIN chat_group_members cgm ON cg.name = cgm.cg_name WHERE cgm.user_email = ?";
+                 PreparedStatement st2 = con.prepareStatement(sql2);
+                 st2.setString(1, user.getEmail());
+                 ResultSet rs2 = st2.executeQuery();
+                 while(rs2.next()) {
+                     chatGroupList.add(rs2.getString(1));
+                     System.out.println("" + (numOfGroups+1) + ". " + rs2.getString(1));
+                 }
+             } catch(Exception e) {
+                     System.out.println(e);
+             }
+
+             System.out.println("******************************************************************");
+             System.out.println("                     What would you like to do?");
+             System.out.println("******************************************************************");
+             System.out.println("1.) View messages in a ChatGroup");
+             System.out.println("2.) Back to ChatGroup menu");
+
+
+
+             do {
+                  input = scanner.nextInt();
+                  if(input != 1 && input != 2)
+                     System.out.println("Invalid selection");
+              } while (input != 1 && input != 2);
+
+              if(input == 1) {
+                  // do some sql
+                  System.out.println("Type the name of the chat group you wish to view");
+                  scanner.nextLine();
+                  String in = scanner.nextLine();
+
+                  System.out.println("***********************************************************");
+                  System.out.println("Messages in: " + in);
+                  System.out.println("***********************************************************");
+
+                  try {
+                      String sql2 = "SELECT cg.owner, cgm.timestamp, cgm.sender, cgm.text FROM chat_group_messages cgm INNER JOIN Chat_Groups cg ON cg.name = cgm.chat_group_name WHERE cg.name = ?";
+                      PreparedStatement st2 = con.prepareStatement(sql2);
+                      st2.setString(1, in);
+                      ResultSet rs2 = st2.executeQuery();
+                      int j = 0;
+                      while(rs2.next()) {
+                          String owner = rs2.getString(1);
+                          String time = rs2.getString(2);
+                          String sender = rs2.getString(3);
+                          String text = rs2.getString(4);
+
+                          System.out.println("------------------------------------------------------------------");
+                          System.out.println("Post Num: " + (j+1));
+                          System.out.println("Sender: " + sender);
+                          System.out.println("Posted on: " + time);
+                          System.out.println("");
+                          System.out.println("" + text);
+                          System.out.println("");
+                          j++;
+
+                      }
+                  } catch(Exception e) {
+                          System.out.println(e);
+                  }
+
+                 System.out.println("------------------------------------------------------------------");
+                 System.out.println("******************************************************************");
+                 System.out.println("                     What would you like to do?");
+                 System.out.println("******************************************************************");
+                 System.out.println("1.) Post a message");
+                 System.out.println("2.) Delete a message");
+                 System.out.println("3.) Back to my ChatGroups");
+
+
+
+                 do {
+                      input = scanner.nextInt();
+                      if(input != 1 && input != 2 && input != 3)
+                         System.out.println("Invalid selection");
+                  } while (input != 1 && input != 2 && input != 3);
+
+                  if(input == 1) {
+
+                  }
+
+                  if(input == 2) {
+
+                  }
+
+                  if(input == 3) {
+
+                  }
+
+
+
+              }
+
+
+
+
+
 	 }
 
 	 if(input == 2) {
@@ -318,7 +460,7 @@ public class SocialNetwork {
 	 }
 
 	 if(input == 5) {
-	     displayHomePage("Brandon");
+	     displayHomePage(user);
 	 }
     }
 
@@ -343,7 +485,7 @@ public class SocialNetwork {
 	 } while (input != 1 && input != 2 && input != 3 && input != 4 && input != 5);
 
 	 if(input == 1) {
-	    
+
 	 }
 
 	 if(input == 2) {
@@ -359,7 +501,7 @@ public class SocialNetwork {
 	 }
 
 	 if(input == 5) {
-	    displayHomePage("Brandon");
+	    displayHomePage(user);
 	 }
     }
 
