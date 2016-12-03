@@ -239,7 +239,7 @@ public class MyCircle {
              queryToInsertMyCircleMessage(user, messageText, words);
 	     System.out.println("---------------------------------");
 	     System.out.println("Message successfully posted!");
-	     System.out.println("---------------------------------");
+             System.out.println("---------------------------------");
 
 	     return;
 	 }
@@ -378,7 +378,9 @@ public class MyCircle {
     }
 
      public ArrayList<String> addMessageTopicWords(ArrayList<String> words) {
-	System.out.println("Enter a topic word to be associated with your message:");
+
+        System.out.println("Enter a topic word to be associated with your message:");
+
         String s = scanner.nextLine();
 	words.add(s);
         System.out.println("Do you want to add another topic word?"); 
@@ -390,6 +392,7 @@ public class MyCircle {
 	     if(in != 1 && in != 2)
       	     System.out.println("Invalid selection");
 	 } while (in != 1 && in != 2);
+        scanner.nextLine();
 
 	if(in == 1) {
 	    addMessageTopicWords(words);

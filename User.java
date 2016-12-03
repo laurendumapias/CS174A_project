@@ -8,7 +8,7 @@ public class User {
     // MAY NEED TO ADD MY CIRCLE ID
     
     public String name, email, phone, password, screenname;
-    public boolean isAManager;
+    public String isAManager;
     public ArrayList<String> friendList;
     public ArrayList<String> topicWords;
     public int myCircleId;
@@ -20,11 +20,25 @@ public class User {
 	phone = "N/A";
 	password = pass;
 	screenname = "N/A";
-	isAManager = false;
+        isAManager = "0";
 	friendList = new ArrayList<String>();
 	topicWords = new ArrayList<String>();
 	myCircleId = 0;
 	myCircle = new MyCircle(myCircleId);
+    }
+
+    public User(String e, String pass, String isAMan) {
+
+        name = e;
+        email = e;
+        phone = "N/A";
+        password = pass;
+        screenname = "N/A";
+        isAManager = isAMan;
+        friendList = new ArrayList<String>();
+        topicWords = new ArrayList<String>();
+        myCircleId = 0;
+        myCircle = new MyCircle(myCircleId);
     }
 
 
@@ -34,34 +48,24 @@ public class User {
 	phone = pNum;
 	password = pass;
 	screenname = sName;
-	isAManager = false;
+        isAManager = "0";
 	friendList = new ArrayList<String>();
 	topicWords = new ArrayList<String>();
     }
 
-    public User(String name, String email, String phone, String password, String screenname, int isAManager) {
+    public User(String name, String email, String phone, String password, String screenname, String isAManager) {
         // insert user into database
         name = name;
 	email = email;
 	phone = phone;
 	password = password;
 	screenname = screenname;
-	isAManager = isAManager;
+        isAManager = "0";
 	friendList = new ArrayList<String>();
 	topicWords = new ArrayList<String>();
 
     }
 
-    public User(String name, String email, String phone, String password, int isAManager) {
-        // insert user into database
-        name = name;
-	email = email;
-	phone = phone;
-	password = password;
-	isAManager = isAManager;
-	friendList = new ArrayList<String>();
-	topicWords = new ArrayList<String>();
-    }
 
     
 
@@ -119,6 +123,10 @@ public class User {
 	return myCircle;
     }
     
+    public String getIsAManager() {
+         return isAManager;
+    }
+
 
 
 
